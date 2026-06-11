@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Q-Day Security Platform</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- BOOT SCREEN -->
+  <div id="bootScreen">
+    <div class="boot-content">
+      <div class="boot-logo">Q-DAY</div>
+      <div class="boot-sub">QUANTUM SECURITY PLATFORM v2.0</div>
+      <div class="boot-bar-wrap"><div class="boot-bar" id="bootBar"></div></div>
+      <div class="boot-status" id="bootStatus">Initialiseren kwantummodules...</div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" class="hidden">
+
+    <!-- HEADER -->
+    <header>
+      <div class="header-left">
+        <div class="logo-q">⬡</div>
+        <div>
+          <div class="logo-title">Q-DAY PLATFORM</div>
+          <div class="logo-sub">Quantum Security Research Suite</div>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-btn active" data-tab="shor">SHOR SIMULATOR</button>
+        <button class="nav-btn" data-tab="pqc">PQC TRAINING</button>
+        <button class="nav-btn" data-tab="awareness">Q-DAY TIMELINE</button>
+        <button class="nav-btn" data-tab="ctf">CTF LAB</button>
+      </nav>
+      <div class="header-right">
+        <div class="threat-dot"></div>
+        <span class="threat-label">QUANTUM THREAT: <span id="threatLevel">MEDIUM</span></span>
+      </div>
+    </header>
+
+    <!-- =================== TAB: SHOR SIMULATOR =================== -->
+    <section id="tab-shor" class="tab-content active">
+      <div class="section-hero">
+        <div class="section-eyebrow">MODULE 01</div>
+        <h1>Shor's Algoritme Simulator</h1>
+        <p>Visualiseer hoe een kwantumcomputer RSA-encryptie breekt via periodebepaling en kwantuminterferentie.</p>
+      </div>
+
+      <div class="shor-layout">
+        <!-- Controls -->
+        <div class="panel">
+          <div class="panel-title">⚙ CONFIGURATIE</div>
+          <label>RSA Modulus N</label>
+          <div class="input-row">
+            <select id="shorN">
+              <option value="15">N = 15 (p=3, q=5)</option>
+              <option value="21">N = 21 (p=3, q=7)</option>
+              <option value="35">N = 35 (p=5, q=7)</option>
+              <option value="77">N = 77 (p=7, q=11)</option>
+            </select>
+          </div>
+          <label>Basis a (coprime met N)</label>
+          <div class="input-row">
+            <input type="number" id="shorA" value="2" min="2" max="20" />
+          </div>
+          <label>Kwantumruis simulatie</label>
+          <input type="range" id="shorNoise" min="0" max="100" value="10" />
+          <div class="range-labels"><span>0% (ideaal)</span><span id="noiseVal">10%</span><span>100%</span></div>
+
+          <button class="btn-primary" id="btnRunShor">▶ START SIMULATIE</button>
+          <button class="btn-ghost" id="btnResetShor">↺ RESET</button>
+
+          <div class="info-box" id="shorInfo">
+            <div class="info-title">HOE WERKT HET?</div>
+            <p>Shor's algoritme zoekt de periode r van f(x) = a^x mod N. Als r gevonden is, geeft ggd(a^(r/2) ± 1, N) de priemfactoren terug.</p>
+          </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="viz-area">
+          <div class="steps-header">
+            <div class="step-indicator" id="si0">1. SUPERP.</div>
+            <div class="step-indicator" id="si1">2. ORACLE</div>
+            <div class="step-indicator" id="si2">3. QFT</div>
+            <div class="step-indicator" id="si3">4. METING</div>
+            <div class="step-indicator" id="si4">5. FACTOREN</div>
+          </div>
+
+          <canvas id="shorCanvas" width="700" height="280"></canvas>
+
+          <div class="shor-log" id="shorLog">
+            <div class="log-line dim">» Kies parameters en start de simulatie...</div>
+          </div>
+
+          <div class="result-grid" id="shorResult" style="display:none">
+            <div class="result-card">
+              <div class="result-label">PERIODE r</div>
+              <div class="result-value" id="resR">—</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">FACTOR p</div>
+              <div class="result-value" id="resP">—</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">FACTOR q</div>
+              <div class="result-value" id="resQ">—</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">QUBITS NODIG</div>
+              <div class="result-value" id="resQ2">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Qubit register -->
+        <div class="panel qubit-panel">
+          <div class="panel-title">⬡ QUBIT REGISTER</div>
+          <div id="qubitGrid"></div>
+          <div class="panel-title" style="margin-top:1.5rem">📊 KWANTUMCIRCUIT</div>
+          <canvas id="circuitCanvas" width="300" height="180"></canvas>
+        </div>
+      </div>
+
+      <!-- Complexity comparison -->
+      <div class="complexity-bar-section">
+        <div class="section-eyebrow">COMPLEXITEIT VERGELIJKING</div>
+        <div class="complexity-bars">
+          <div class="cbar-row">
+            <span class="cbar-label">Klassiek (GNFS)</span>
+            <div class="cbar-outer"><div class="cbar-fill classical" style="width:92%">exp(O(n^1/3))</div></div>
+          </div>
+          <div class="cbar-row">
+            <span class="cbar-label">Kwantum (Shor)</span>
+            <div class="cbar-outer"><div class="cbar-fill quantum" style="width:18%">O(n³)</div></div>
+          </div>
+          <div class="cbar-row">
+            <span class="cbar-label">PQC (Kyber)</span>
+            <div class="cbar-outer"><div class="cbar-fill pqc" style="width:22%">O(n² log n)</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== TAB: PQC TRAINING =================== -->
+    <section id="tab-pqc" class="tab-content">
+      <div class="section-hero">
+        <div class="section-eyebrow">MODULE 02</div>
+        <h1>Post-Quantum Cryptografie Training</h1>
+        <p>Leer interactief hoe CRYSTALS-Kyber (sleuteluitwisseling) en CRYSTALS-Dilithium (digitale handtekening) werken.</p>
+      </div>
+
+      <div class="pqc-tabs">
+        <button class="pqc-tab-btn active" data-pqc="kyber">🔑 CRYSTALS-KYBER</button>
+        <button class="pqc-tab-btn" data-pqc="dilithium">✍ CRYSTALS-DILITHIUM</button>
+        <button class="pqc-tab-btn" data-pqc="compare">⚖ VERGELIJKING</button>
+      </div>
+
+      <!-- KYBER -->
+      <div id="pqc-kyber" class="pqc-content active">
+        <div class="pqc-two-col">
+          <div class="panel">
+            <div class="panel-title">🔑 KYBER KEY EXCHANGE</div>
+            <p class="panel-desc">Kyber is gebaseerd op het <strong>Learning With Errors (LWE)</strong> probleem in roosters (lattices). Zelfs kwantumcomputers kunnen dit niet efficiënt oplossen.</p>
+
+            <div class="kyber-steps">
+              <div class="kyber-step" id="kstep0">
+                <div class="kstep-num">01</div>
+                <div class="kstep-body">
+                  <div class="kstep-title">KEY GENERATION</div>
+                  <div class="kstep-desc">Alice genereert roostermatrix A, geheime sleutel s, en ruis e. Publieke sleutel: pk = (A, b = As + e)</div>
+                  <button class="btn-sm" onclick="kyberStep(0)">▶ Uitvoeren</button>
+                </div>
+              </div>
+              <div class="kyber-step" id="kstep1">
+                <div class="kstep-num">02</div>
+                <div class="kstep-body">
+                  <div class="kstep-title">ENCAPSULATIE (Bob)</div>
+                  <div class="kstep-desc">Bob versleutelt een random gedeeld geheim m met Alice's publieke sleutel. Output: ciphertext (u, v)</div>
+                  <button class="btn-sm" onclick="kyberStep(1)">▶ Uitvoeren</button>
+                </div>
+              </div>
+              <div class="kyber-step" id="kstep2">
+                <div class="kstep-num">03</div>
+                <div class="kstep-body">
+                  <div class="kstep-title">DECAPSULATIE (Alice)</div>
+                  <div class="kstep-desc">Alice decodeert met geheime sleutel s en herstelt het gedeeld geheim m.</div>
+                  <button class="btn-sm" onclick="kyberStep(2)">▶ Uitvoeren</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="viz-area">
+            <canvas id="kyberCanvas" width="500" height="340"></canvas>
+            <div class="kyber-output" id="kyberOutput">
+              <div class="log-line dim">» Klik op stap 01 om te beginnen...</div>
+            </div>
+            <div class="lattice-info">
+              <div class="li-card">
+                <div class="li-label">BEVEILIGINGSNIVEAU</div>
+                <div class="li-val green">256-bit quantum</div>
+              </div>
+              <div class="li-card">
+                <div class="li-label">STANDAARD</div>
+                <div class="li-val">NIST FIPS 203</div>
+              </div>
+              <div class="li-card">
+                <div class="li-label">SLEUTELGROOTTE</div>
+                <div class="li-val">1184 bytes (pk)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DILITHIUM -->
+      <div id="pqc-dilithium" class="pqc-content">
+        <div class="pqc-two-col">
+          <div class="panel">
+            <div class="panel-title">✍ DILITHIUM HANDTEKENING</div>
+            <p class="panel-desc">Dilithium gebruikt <strong>Module-LWE</strong> voor digitale handtekeningen. Quantum-resistent alternatief voor RSA/ECDSA.</p>
+
+            <div class="kyber-steps">
+              <div class="kyber-step" id="dstep0">
+                <div class="kstep-num">01</div>
+                <div class="kstep-body">
+                  <div class="kstep-title">SLEUTELPAAR AANMAKEN</div>
+                  <div class="kstep-desc">Genereer roostermatrix A, geheime vectors s1, s2. Publieke sleutel t = As1 + s2</div>
+                  <button class="btn-sm" onclick="dilithiumStep(0)">▶ Uitvoeren</button>
+                </div>
+              </div>
+              <div class="kyber-step" id="dstep1">
+                <div class="kstep-num">02</div>
+                <div class="kstep-body">
+                  <div class="kstep-title">BERICHT ONDERTEKENEN</div>
+                  <div class="kstep-desc">Genereer commitment y, challenge c = H(t, Ay, msg). Handtekening z = y + cs1</div>
+                  <button class="btn-sm" onclick="dilithiumStep(1)">▶ Uitvoeren</button>
+                </div>
+              </div>
+              <div class="kyber-step" id="dstep2">
+                <div class="kstep-num">03</div>
+                <div class="kstep-body">
+                  <div class="kstep-title">HANDTEKENING VERIFIËREN</div>
+                  <div class="kstep-desc">Verificateur controleert: Az ≈ ct + commitment. Accepteer als geldig binnen bounds.</div>
+                  <button class="btn-sm" onclick="dilithiumStep(2)">▶ Uitvoeren</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="viz-area">
+            <canvas id="dilithiumCanvas" width="500" height="340"></canvas>
+            <div class="kyber-output" id="dilithiumOutput">
+              <div class="log-line dim">» Klik op stap 01 om te beginnen...</div>
+            </div>
+            <div class="lattice-info">
+              <div class="li-card">
+                <div class="li-label">BEVEILIGINGSNIVEAU</div>
+                <div class="li-val green">128-bit quantum</div>
+              </div>
+              <div class="li-card">
+                <div class="li-label">STANDAARD</div>
+                <div class="li-val">NIST FIPS 204</div>
+              </div>
+              <div class="li-card">
+                <div class="li-label">HANDTEKENINGGROOTTE</div>
+                <div class="li-val">2420 bytes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPARE -->
+      <div id="pqc-compare" class="pqc-content">
+        <div class="compare-grid">
+          <div class="compare-header-row">
+            <div></div>
+            <div class="ch rsa">RSA-2048</div>
+            <div class="ch ecc">ECC P-256</div>
+            <div class="ch kyber">Kyber-768</div>
+            <div class="ch dilithium">Dilithium3</div>
+            <div class="ch falcon">FALCON-512</div>
+          </div>
+          <div class="compare-row">
+            <div class="cr-label">Quantum-veilig</div>
+            <div class="cr-val red">✗</div>
+            <div class="cr-val red">✗</div>
+            <div class="cr-val green">✓</div>
+            <div class="cr-val green">✓</div>
+            <div class="cr-val green">✓</div>
+          </div>
+          <div class="compare-row">
+            <div class="cr-label">Publieke sleutel</div>
+            <div class="cr-val">256 B</div>
+            <div class="cr-val">64 B</div>
+            <div class="cr-val yellow">1184 B</div>
+            <div class="cr-val yellow">1952 B</div>
+            <div class="cr-val yellow">897 B</div>
+          </div>
+          <div class="compare-row">
+            <div class="cr-label">Handtekening</div>
+            <div class="cr-val">256 B</div>
+            <div class="cr-val">64 B</div>
+            <div class="cr-val dim">N/A (KEM)</div>
+            <div class="cr-val yellow">3293 B</div>
+            <div class="cr-val green">666 B</div>
+          </div>
+          <div class="compare-row">
+            <div class="cr-label">Snelheid (keygen)</div>
+            <div class="cr-val red">Langzaam</div>
+            <div class="cr-val yellow">Gemiddeld</div>
+            <div class="cr-val green">Snel</div>
+            <div class="cr-val green">Snel</div>
+            <div class="cr-val green">Snel</div>
+          </div>
+          <div class="compare-row">
+            <div class="cr-label">Gebaseerd op</div>
+            <div class="cr-val">Factorisatie</div>
+            <div class="cr-val">Discrete log</div>
+            <div class="cr-val green">LWE rooster</div>
+            <div class="cr-val green">Module-LWE</div>
+            <div class="cr-val green">NTRU rooster</div>
+          </div>
+          <div class="compare-row">
+            <div class="cr-label">NIST Status</div>
+            <div class="cr-val red">Deprecated 2030</div>
+            <div class="cr-val red">Deprecated 2030</div>
+            <div class="cr-val green">FIPS 203</div>
+            <div class="cr-val green">FIPS 204</div>
+            <div class="cr-val green">FIPS 206</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== TAB: Q-DAY AWARENESS =================== -->
+    <section id="tab-awareness" class="tab-content">
+      <div class="section-hero">
+        <div class="section-eyebrow">MODULE 03</div>
+        <h1>Q-Day Awareness Dashboard</h1>
+        <p>Tijdlijn, risico-assessment en PQC-migratieplanner voor security teams.</p>
+      </div>
+
+      <div class="awareness-layout">
+
+        <!-- Timeline -->
+        <div class="timeline-section">
+          <div class="panel-title">⏱ KWANTUM DREIGINGSTIJDLIJN</div>
+          <div class="timeline">
+            <div class="tl-item past">
+              <div class="tl-dot"></div>
+              <div class="tl-year">1994</div>
+              <div class="tl-content">
+                <div class="tl-title">Shor's Algoritme</div>
+                <div class="tl-desc">Peter Shor publiceert theoretisch algoritme dat RSA in polynomiale tijd breekt op kwantumcomputer.</div>
+              </div>
+            </div>
+            <div class="tl-item past">
+              <div class="tl-dot"></div>
+              <div class="tl-year">2016</div>
+              <div class="tl-content">
+                <div class="tl-title">NIST PQC Competitie Start</div>
+                <div class="tl-desc">NIST lanceert wereldwijde competitie voor post-quantum cryptografiestandaarden.</div>
+              </div>
+            </div>
+            <div class="tl-item past">
+              <div class="tl-dot"></div>
+              <div class="tl-year">2019</div>
+              <div class="tl-content">
+                <div class="tl-title">Google Kwantum Suprematie</div>
+                <div class="tl-desc">53-qubit Sycamore processor voert berekening uit in 200 seconden die klassiek 10.000 jaar zou duren.</div>
+              </div>
+            </div>
+            <div class="tl-item past">
+              <div class="tl-dot"></div>
+              <div class="tl-year">2022</div>
+              <div class="tl-content">
+                <div class="tl-title">IBM 433-qubit Osprey</div>
+                <div class="tl-desc">IBM presenteert 433-qubit processor, maar error rates nog te hoog voor cryptografische aanvallen.</div>
+              </div>
+            </div>
+            <div class="tl-item past">
+              <div class="tl-dot"></div>
+              <div class="tl-year">2024</div>
+              <div class="tl-content">
+                <div class="tl-title">NIST PQC Standaarden Gepubliceerd</div>
+                <div class="tl-desc">FIPS 203 (Kyber), FIPS 204 (Dilithium), FIPS 206 (FALCON) officieel gepubliceerd.</div>
+              </div>
+            </div>
+            <div class="tl-item now">
+              <div class="tl-dot pulse"></div>
+              <div class="tl-year">2026</div>
+              <div class="tl-content">
+                <div class="tl-title">⬡ NU — Migratiefase</div>
+                <div class="tl-desc">Organisaties beginnen hybride PQC-implementaties. "Harvest now, decrypt later" aanvallen al actief.</div>
+              </div>
+            </div>
+            <div class="tl-item future">
+              <div class="tl-dot"></div>
+              <div class="tl-year">2028</div>
+              <div class="tl-content">
+                <div class="tl-title">NIST Deadline Fase 1</div>
+                <div class="tl-desc">Overheid & kritieke infrastructuur moeten PQC-migratie grotendeels afgerond hebben.</div>
+              </div>
+            </div>
+            <div class="tl-item future danger">
+              <div class="tl-dot"></div>
+              <div class="tl-year">~2030</div>
+              <div class="tl-content">
+                <div class="tl-title">⚠ Q-DAY (Verwacht)</div>
+                <div class="tl-desc">Kwantumcomputers krachtig genoeg om RSA-2048 te breken. Systemen zonder PQC zijn kwetsbaar.</div>
+              </div>
+            </div>
+            <div class="tl-item future">
+              <div class="tl-dot"></div>
+              <div class="tl-year">2035</div>
+              <div class="tl-content">
+                <div class="tl-title">Post-Kwantum Tijdperk</div>
+                <div class="tl-desc">RSA/ECC volledig verouderd. PQC is de nieuwe standaard voor alle digitale communicatie.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk Assessment -->
+        <div class="risk-section">
+          <div class="panel-title">🎯 RISICO-ASSESSMENT</div>
+          <div class="risk-form">
+            <label>Type organisatie</label>
+            <select id="orgType" onchange="updateRisk()">
+              <option value="gov">Overheid / Defensie</option>
+              <option value="finance">Financiële sector</option>
+              <option value="health">Gezondheidszorg</option>
+              <option value="tech">Tech / Cloud</option>
+              <option value="retail">Retail / E-commerce</option>
+            </select>
+            <label>Huidige encryptie</label>
+            <select id="currentEnc" onchange="updateRisk()">
+              <option value="rsa2048">RSA-2048</option>
+              <option value="rsa4096">RSA-4096</option>
+              <option value="ecc256">ECC P-256</option>
+              <option value="aes256">AES-256 (symmetrisch)</option>
+              <option value="hybrid">Hybride PQC</option>
+            </select>
+            <label>Gevoeligheid data (jaren)</label>
+            <input type="range" id="dataSens" min="1" max="30" value="10" onchange="updateRisk()" />
+            <div class="range-labels"><span>1 jaar</span><span id="sensVal">10 jaar</span><span>30 jaar</span></div>
+            <label>Harvest-now risico</label>
+            <input type="range" id="harvestRisk" min="0" max="100" value="50" onchange="updateRisk()" />
+            <div class="range-labels"><span>Laag</span><span id="harvestVal">50%</span><span>Hoog</span></div>
+          </div>
+
+          <div class="risk-result" id="riskResult">
+            <div class="risk-score-label">RISICOSCORE</div>
+            <div class="risk-gauge">
+              <canvas id="gaugeCanvas" width="200" height="110"></canvas>
+              <div class="gauge-value" id="gaugeValue">72</div>
+              <div class="gauge-label" id="gaugeLabel">HOOG</div>
+            </div>
+            <div class="risk-breakdown" id="riskBreakdown"></div>
+          </div>
+        </div>
+
+        <!-- Migration Planner -->
+        <div class="migration-section">
+          <div class="panel-title">🗺 MIGRATIEPLANNER</div>
+          <div id="migrationPlan">
+            <div class="mig-phase">
+              <div class="mig-phase-header">
+                <div class="mig-phase-num">FASE 1</div>
+                <div class="mig-phase-title">INVENTARISATIE (Nu — Q3 2026)</div>
+                <div class="mig-check" id="mig0" onclick="toggleMig(0)">☐</div>
+              </div>
+              <ul class="mig-list">
+                <li>Inventariseer alle systemen die RSA/ECC gebruiken</li>
+                <li>Identificeer "harvest now, decrypt later" kwetsbaarheden</li>
+                <li>Maak cryptografische bill of materials (CBOM)</li>
+              </ul>
+            </div>
+            <div class="mig-phase">
+              <div class="mig-phase-header">
+                <div class="mig-phase-num">FASE 2</div>
+                <div class="mig-phase-title">PRIORITERING (Q4 2026 — Q1 2027)</div>
+                <div class="mig-check" id="mig1" onclick="toggleMig(1)">☐</div>
+              </div>
+              <ul class="mig-list">
+                <li>Prioriteer systemen op basis van data-levensduur</li>
+                <li>Selecteer PQC-algoritmen (Kyber voor KEM, Dilithium voor handtekeningen)</li>
+                <li>Plan hybride implementatie (klassiek + PQC parallel)</li>
+              </ul>
+            </div>
+            <div class="mig-phase">
+              <div class="mig-phase-header">
+                <div class="mig-phase-num">FASE 3</div>
+                <div class="mig-phase-title">HYBRIDE IMPLEMENTATIE (2027)</div>
+                <div class="mig-check" id="mig2" onclick="toggleMig(2)">☐</div>
+              </div>
+              <ul class="mig-list">
+                <li>Implementeer hybride TLS (X25519 + Kyber)</li>
+                <li>Update PKI-infrastructuur voor PQC-certificaten</li>
+                <li>Test performance impact op productiesystemen</li>
+              </ul>
+            </div>
+            <div class="mig-phase">
+              <div class="mig-phase-header">
+                <div class="mig-phase-num">FASE 4</div>
+                <div class="mig-phase-title">VOLLEDIGE PQC MIGRATIE (2028)</div>
+                <div class="mig-check" id="mig3" onclick="toggleMig(3)">☐</div>
+              </div>
+              <ul class="mig-list">
+                <li>Verwijder legacy RSA/ECC uit kritieke systemen</li>
+                <li>Herversleutel opgeslagen gevoelige data</li>
+                <li>Auditeer en certificeer PQC-implementaties</li>
+              </ul>
+            </div>
+          </div>
+          <div class="mig-progress-bar-wrap">
+            <div class="mig-progress-label">MIGRATIE VOORTGANG</div>
+            <div class="mig-outer"><div class="mig-inner" id="migInner" style="width:0%">0%</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== TAB: CTF LAB =================== -->
+    <section id="tab-ctf" class="tab-content">
+      <div class="section-hero">
+        <div class="section-eyebrow">MODULE 04</div>
+        <h1>CTF Lab — Quantum Safe Challenges</h1>
+        <p>Train je quantum-security kennis met interactieve uitdagingen. Los puzzels op en verdien punten.</p>
+      </div>
+
+      <div class="ctf-layout">
+        <!-- Scoreboard -->
+        <div class="panel ctf-score-panel">
+          <div class="panel-title">🏆 JOUW SCORE</div>
+          <div class="ctf-big-score" id="ctfScore">0</div>
+          <div class="ctf-score-sub">PUNTEN</div>
+          <div class="ctf-badges" id="ctfBadges"></div>
+          <div class="panel-title" style="margin-top:1rem">📋 VOORTGANG</div>
+          <div id="ctfProgress"></div>
+        </div>
+
+        <!-- Challenges -->
+        <div class="challenges-area">
+          <!-- Challenge 1 -->
+          <div class="challenge-card" id="ch1">
+            <div class="ch-header">
+              <div class="ch-cat">🔢 WISKUNDE</div>
+              <div class="ch-pts">+100 PTS</div>
+              <div class="ch-status" id="ch1-status">OPEN</div>
+            </div>
+            <div class="ch-title">Periodiciteit Detectie</div>
+            <div class="ch-desc">Shor's algoritme zoekt de periode r van f(x) = a^x mod N. Voor a=7, N=15: wat is de periode r?</div>
+            <div class="ch-hint" id="ch1-hint" style="display:none">💡 Hint: Bereken 7^1, 7^2, 7^3... mod 15 totdat je terugkeert naar 7^0 mod 15 = 1</div>
+            <div class="ch-input-row">
+              <input type="number" class="ch-input" id="ch1-ans" placeholder="Voer r in..." />
+              <button class="btn-primary btn-sm-submit" onclick="submitChallenge(1)">SUBMIT</button>
+              <button class="btn-ghost btn-sm-submit" onclick="toggleHint(1)">HINT</button>
+            </div>
+            <div class="ch-feedback" id="ch1-feedback"></div>
+          </div>
+
+          <!-- Challenge 2 -->
+          <div class="challenge-card" id="ch2">
+            <div class="ch-header">
+              <div class="ch-cat">🔑 CRYPTOGRAFIE</div>
+              <div class="ch-pts">+150 PTS</div>
+              <div class="ch-status" id="ch2-status">OPEN</div>
+            </div>
+            <div class="ch-title">LWE Decryptie</div>
+            <div class="ch-desc">In een vereenvoudigd LWE-systeem: s=3, a=5, ruis e=1, q=17. Bereken b = (a·s + e) mod q. Wat is b?</div>
+            <div class="ch-hint" id="ch2-hint" style="display:none">💡 Hint: Bereken stap voor stap: a·s = 5·3 = 15, dan + ruis 1 = 16, dan mod 17</div>
+            <div class="ch-input-row">
+              <input type="number" class="ch-input" id="ch2-ans" placeholder="Voer b in..." />
+              <button class="btn-primary btn-sm-submit" onclick="submitChallenge(2)">SUBMIT</button>
+              <button class="btn-ghost btn-sm-submit" onclick="toggleHint(2)">HINT</button>
+            </div>
+            <div class="ch-feedback" id="ch2-feedback"></div>
+          </div>
+
+          <!-- Challenge 3 -->
+          <div class="challenge-card" id="ch3">
+            <div class="ch-header">
+              <div class="ch-cat">⚡ KWANTUM</div>
+              <div class="ch-pts">+200 PTS</div>
+              <div class="ch-status" id="ch3-status">OPEN</div>
+            </div>
+            <div class="ch-title">Qubit Superpositie</div>
+            <div class="ch-desc">Een kwantumregister met n=3 qubits staat in uniforme superpositie. Hoeveel toestanden bestaan simultaan?</div>
+            <div class="ch-hint" id="ch3-hint" style="display:none">💡 Hint: n qubits → 2^n toestanden. Wat is 2^3?</div>
+            <div class="ch-input-row">
+              <input type="number" class="ch-input" id="ch3-ans" placeholder="Aantal toestanden..." />
+              <button class="btn-primary btn-sm-submit" onclick="submitChallenge(3)">SUBMIT</button>
+              <button class="btn-ghost btn-sm-submit" onclick="toggleHint(3)">HINT</button>
+            </div>
+            <div class="ch-feedback" id="ch3-feedback"></div>
+          </div>
+
+          <!-- Challenge 4 -->
+          <div class="challenge-card" id="ch4">
+            <div class="ch-header">
+              <div class="ch-cat">🛡 PQC KENNIS</div>
+              <div class="ch-pts">+250 PTS</div>
+              <div class="ch-status" id="ch4-status">OPEN</div>
+            </div>
+            <div class="ch-title">NIST Standaard Identificatie</div>
+            <div class="ch-desc">Welk NIST FIPS-nummer is toegewezen aan CRYSTALS-Kyber (ML-KEM)? Voer alleen het nummer in.</div>
+            <div class="ch-hint" id="ch4-hint" style="display:none">💡 Hint: FIPS 20X — het nummer staat in de PQC Training module.</div>
+            <div class="ch-input-row">
+              <input type="number" class="ch-input" id="ch4-ans" placeholder="FIPS nummer..." />
+              <button class="btn-primary btn-sm-submit" onclick="submitChallenge(4)">SUBMIT</button>
+              <button class="btn-ghost btn-sm-submit" onclick="toggleHint(4)">HINT</button>
+            </div>
+            <div class="ch-feedback" id="ch4-feedback"></div>
+          </div>
+
+          <!-- Challenge 5 — AI powered -->
+          <div class="challenge-card ai-challenge" id="ch5">
+            <div class="ch-header">
+              <div class="ch-cat">🤖 AI UITDAGING</div>
+              <div class="ch-pts">+500 PTS</div>
+              <div class="ch-status" id="ch5-status">OPEN</div>
+            </div>
+            <div class="ch-title">Kwantum Expert Vraag</div>
+            <div class="ch-desc">Stel een open vraag over quantum-safe cryptografie. Een AI-expert beoordeelt je antwoord!</div>
+            <div class="ai-question-area">
+              <div class="ai-question" id="aiQuestion">Laad vraag...</div>
+              <button class="btn-ghost btn-sm-submit" onclick="loadAIQuestion()">🔄 Nieuwe vraag</button>
+            </div>
+            <textarea class="ch-textarea" id="ch5-ans" placeholder="Schrijf je antwoord hier (minimaal 50 woorden)..."></textarea>
+            <button class="btn-primary" id="btnSubmitAI" onclick="submitAIChallenge()">🤖 LAAT AI BEOORDELEN</button>
+            <div class="ch-feedback" id="ch5-feedback"></div>
+            <div class="ai-response-box" id="aiResponse" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /app -->
+
+  <script src="script.js"></script>
+</body>
+</html>
